@@ -590,7 +590,7 @@ Function Save-TicketInSqlHC {
         Number of the ticket.
 
     .PARAMETER PSCode
-        Unique identifier to match the row in the SAL tickets table with the 
+        Unique identifier to match the row in the SQL tickets table with the 
         row in the table for that specific script.
 
     .PARAMETER Force
