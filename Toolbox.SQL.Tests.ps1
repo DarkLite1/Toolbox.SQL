@@ -17,14 +17,15 @@ BeforeAll {
         TicketNr     = 1
         ScriptName   = 'Pester test'
     }
-    
+
     $invokeTestParams = @{
-        ServerInstance    = $testParams.ComputerName
-        Database          = $testParams.Database
-        QueryTimeout      = '1000'
-        ConnectionTimeout = '20'
-        ErrorAction       = 'Stop'
-        Verbose           = $false
+        ServerInstance         = $testParams.ComputerName
+        Database               = $testParams.Database
+        TrustServerCertificate = $true
+        QueryTimeout           = '1000'
+        ConnectionTimeout      = '20'
+        ErrorAction            = 'Stop'
+        Verbose                = $false
     }
 }
 Describe 'Save-TicketInSqlHC' {
@@ -79,39 +80,39 @@ Describe 'Save-TicketInSqlHC' {
         }
     )
     Context 'the mandatory parameters are' {
-        It '<_>' -Foreach @(
+        It '<_>' -ForEach @(
             'KeyValuePair', 'TicketNr', 'PSCode', 'ScriptName'
         ) {
             (
                 Get-Command -Name Save-TicketInSqlHC
             ).Parameters[$_].Attributes.Mandatory | Should -BeTrue
-        } 
+        }
     }
     It 'save ScriptName, TicketNr and PSCode' {
         $PSCode = New-PSCodeHC -CountryCode 'BNL'
 
         Save-TicketInSqlHC @testParams -PSCode $PSCode -KeyValuePair @{}
 
-        $Actual = Invoke-Sqlcmd2 @invokeTestParams -As PSObject -Query "
-                SELECT * 
+        $Actual = Invoke-Sqlcmd @invokeTestParams -Query "
+                SELECT *
                 FROM $($testParams.Table)
                 WHERE PSCode = '$PSCode'"
 
         $Actual | Should -Not -BeNullOrEmpty
-    } 
+    }
     Context 'Save a new row with field' {
         It '<Name>' -ForEach $testCases {
             $PSCode = New-PSCodeHC -CountryCode 'BNL'
-    
+
             Save-TicketInSqlHC @testParams -PSCode $PSCode -KeyValuePair @{$Name = $Value }
-    
-            $Actual = Invoke-Sqlcmd2 @invokeTestParams -As PSObject -Query "
-                SELECT * 
+
+            $Actual = Invoke-Sqlcmd @invokeTestParams  -Query "
+                SELECT *
                 FROM $($testParams.Table)
                 WHERE PSCode = '$PSCode'"
-    
+
             $Actual.$Name | Should -BeExactly $Value
-        } 
+        }
     }
     Context 'Update an existing row with field' {
         BeforeAll {
@@ -120,13 +121,13 @@ Describe 'Save-TicketInSqlHC' {
         }
         It '<Name>' -ForEach $testCases {
             Save-TicketInSqlHC @testParams -PSCode $PSCode -KeyValuePair @{$Name = $Value } -Force
-    
-            $Actual = Invoke-Sqlcmd2 @invokeTestParams -As PSObject -Query "
-                SELECT * 
+
+            $Actual = Invoke-Sqlcmd @invokeTestParams  -Query "
+                SELECT *
                 FROM $($testParams.Table)
                 WHERE PSCode = '$PSCode'"
-    
+
             $Actual.$Name | Should -BeExactly $Value
-        } 
+        }
     }
 }
